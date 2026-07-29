@@ -79,6 +79,7 @@ const el = {
 
 let toastTimer;
 let audioContext;
+let cachedNoiseBuffer;
 
 function escapeHtml(value = "") {
   return String(value)
@@ -112,26 +113,92 @@ function getErrorMessage(error) {
   return messages[code] || error?.message || "Não foi possível concluir a ação.";
 }
 
+function ensureAudioContext() {
+  audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
+  if (audioContext.state === "suspended") audioContext.resume().catch(() => {});
+  return audioContext;
+}
+
+function getNoiseBuffer() {
+  const context = ensureAudioContext();
+  if (cachedNoiseBuffer && cachedNoiseBuffer.sampleRate === context.sampleRate) {
+    return cachedNoiseBuffer;
+  }
+  const buffer = context.createBuffer(1, context.sampleRate, context.sampleRate);
+  const channel = buffer.getChannelData(0);
+  for (let index = 0; index < channel.length; index += 1) {
+    channel[index] = Math.random() * 2 - 1;
+  }
+  cachedNoiseBuffer = buffer;
+  return cachedNoiseBuffer;
+}
+
+function playOscillator({ frequency = 330, type = "sine", duration = .08, gain = .03, attack = .002, release = duration } = {}) {
+  const context = ensureAudioContext();
+  const oscillator = context.createOscillator();
+  const gainNode = context.createGain();
+  const now = context.currentTime;
+  oscillator.type = type;
+  oscillator.frequency.setValueAtTime(frequency, now);
+  gainNode.gain.setValueAtTime(.0001, now);
+  gainNode.gain.linearRampToValueAtTime(gain, now + attack);
+  gainNode.gain.exponentialRampToValueAtTime(.0001, now + release);
+  oscillator.connect(gainNode).connect(context.destination);
+  oscillator.start(now);
+  oscillator.stop(now + duration);
+}
+
+function playNoise({ duration = .2, gain = .03, filterType = "lowpass", frequency = 900, q = .0001, attack = .005, release = duration } = {}) {
+  const context = ensureAudioContext();
+  const source = context.createBufferSource();
+  source.buffer = getNoiseBuffer();
+  const filter = context.createBiquadFilter();
+  filter.type = filterType;
+  filter.frequency.setValueAtTime(frequency, context.currentTime);
+  filter.Q.setValueAtTime(q, context.currentTime);
+  const gainNode = context.createGain();
+  const now = context.currentTime;
+  gainNode.gain.setValueAtTime(.0001, now);
+  gainNode.gain.linearRampToValueAtTime(gain, now + attack);
+  gainNode.gain.exponentialRampToValueAtTime(.0001, now + release);
+  source.connect(filter).connect(gainNode).connect(context.destination);
+  source.start(now);
+  source.stop(now + duration);
+}
+
 function playTone(kind = "tap") {
   if (!state.sound) return;
   try {
-    audioContext ||= new (window.AudioContext || window.webkitAudioContext)();
-    const oscillator = audioContext.createOscillator();
-    const gain = audioContext.createGain();
-    const config = {
-      tap: [330, .035, .028],
-      miss: [180, .12, .05],
-      hit: [620, .16, .08],
-      sunk: [220, .38, .1],
-      win: [740, .45, .09]
-    }[kind] || [330, .05, .03];
-    oscillator.frequency.value = config[0];
-    oscillator.type = kind === "hit" ? "square" : "sine";
-    gain.gain.setValueAtTime(config[2], audioContext.currentTime);
-    gain.gain.exponentialRampToValueAtTime(.0001, audioContext.currentTime + config[1]);
-    oscillator.connect(gain).connect(audioContext.destination);
-    oscillator.start();
-    oscillator.stop(audioContext.currentTime + config[1]);
+    if (kind === "tap") {
+      playOscillator({ frequency: 320, type: "sine", duration: .05, gain: .018, release: .05 });
+      return;
+    }
+
+    if (kind === "miss") {
+      playNoise({ duration: .34, gain: .018, filterType: "lowpass", frequency: 620, q: .3, attack: .01, release: .34 });
+      playOscillator({ frequency: 210, type: "sine", duration: .18, gain: .008, release: .18 });
+      return;
+    }
+
+    if (kind === "hit") {
+      playNoise({ duration: .16, gain: .028, filterType: "bandpass", frequency: 920, q: 1.4, attack: .002, release: .16 });
+      playOscillator({ frequency: 92, type: "triangle", duration: .12, gain: .014, release: .12 });
+      return;
+    }
+
+    if (kind === "sunk") {
+      playNoise({ duration: .28, gain: .032, filterType: "bandpass", frequency: 780, q: 1.1, attack: .002, release: .28 });
+      playOscillator({ frequency: 84, type: "triangle", duration: .2, gain: .016, release: .2 });
+      playOscillator({ frequency: 150, type: "sine", duration: .16, gain: .01, release: .16 });
+      return;
+    }
+
+    if (kind === "win") {
+      playOscillator({ frequency: 554, type: "triangle", duration: .12, gain: .02, release: .12 });
+      setTimeout(() => playOscillator({ frequency: 740, type: "triangle", duration: .18, gain: .024, release: .18 }), 110);
+      setTimeout(() => playOscillator({ frequency: 880, type: "triangle", duration: .26, gain: .026, release: .26 }), 240);
+      return;
+    }
   } catch {
     // Sons são opcionais.
   }
@@ -220,6 +287,49 @@ function blankPlacement() {
   return FLEET.map((ship) => ({ ...ship, cells: [], hits: [] }));
 }
 
+function inferOrientationFromCells(cells = []) {
+  if (cells.length <= 1) return "horizontal";
+  const first = parseCoordinate(cells[0]);
+  const second = parseCoordinate(cells[1]);
+  return first.row === second.row ? "horizontal" : "vertical";
+}
+
+function segmentType(index, size) {
+  if (size <= 1) return "solo";
+  if (index === 0) return "bow";
+  if (index === size - 1) return "stern";
+  return "mid";
+}
+
+function buildCellShapeMap(cells = [], orientation = "horizontal") {
+  return new Map(cells.map((cell, index) => [
+    cell,
+    {
+      orientation,
+      segment: segmentType(index, cells.length),
+      size: cells.length
+    }
+  ]));
+}
+
+function buildShipCellMap(ships = []) {
+  const map = new Map();
+  for (const ship of ships) {
+    const cells = ship.cells || [];
+    const orientation = ship.orientation || inferOrientationFromCells(cells);
+    cells.forEach((cell, index) => {
+      map.set(cell, {
+        shipId: ship.id,
+        shipName: ship.name,
+        orientation,
+        segment: segmentType(index, cells.length),
+        size: cells.length
+      });
+    });
+  }
+  return map;
+}
+
 function getPlacedShip(shipId) {
   return state.placement.find((ship) => ship.id === shipId);
 }
@@ -300,32 +410,41 @@ function autoPlaceFleet() {
 }
 
 function createBoardHtml({ mode, ships = [], shots = [], disabled = false }) {
-  const shipCells = new Set(ships.flatMap((ship) => ship.cells || []));
+  const shipCellMap = buildShipCellMap(ships);
   const shotMap = new Map(shots.map((shot) => [shot.coordinate, shot]));
   const selectedShip = getPlacedShip(state.selectedShipId) || FLEET[0];
   const previewCells = mode === "placement" && state.hoverCoordinate
     ? cellsForPlacement(state.hoverCoordinate, selectedShip)
     : [];
   const previewValid = placementIsValid(previewCells, selectedShip.id);
+  const previewShapeMap = buildCellShapeMap(previewCells.filter(Boolean), state.orientation);
 
   const cells = [];
   for (let row = 0; row < BOARD_SIZE; row += 1) {
     for (let col = 0; col < BOARD_SIZE; col += 1) {
       const coord = coordinate(row, col);
       const shot = shotMap.get(coord);
+      const shipMeta = shipCellMap.get(coord);
+      const previewMeta = !shipMeta ? previewShapeMap.get(coord) : null;
+      const shapeMeta = shipMeta || previewMeta;
       const classes = ["cell"];
-      if ((mode === "own" || mode === "placement") && shipCells.has(coord)) classes.push("ship");
-      if (previewCells.includes(coord)) classes.push(previewValid ? "preview-valid" : "preview-invalid");
+      if ((mode === "own" || mode === "placement") && shipMeta) classes.push("ship");
+      if (previewMeta) classes.push(previewValid ? "preview-valid" : "preview-invalid");
       if (shot?.result === "miss") classes.push("miss");
       if (shot?.result === "hit") classes.push("hit");
       if (shot?.result === "sunk") classes.push("sunk");
       if (!shot?.result && shot?.status === "pending") classes.push("pending");
+      if (shapeMeta?.segment) classes.push(`segment-${shapeMeta.segment}`);
+      if (shapeMeta?.orientation) classes.push(`orientation-${shapeMeta.orientation}`);
       const unavailable = mode === "attack" && shot;
       cells.push(`
         <button
           type="button"
           class="${classes.join(" ")}"
           data-coordinate="${coord}"
+          ${shapeMeta?.segment ? `data-segment="${shapeMeta.segment}"` : ""}
+          ${shapeMeta?.orientation ? `data-orientation="${shapeMeta.orientation}"` : ""}
+          ${shapeMeta?.size ? `data-size="${shapeMeta.size}"` : ""}
           aria-label="Casa ${coord}${shot?.result ? `: ${shot.result}` : ""}"
           ${disabled || unavailable ? "disabled" : ""}
         ></button>
@@ -859,6 +978,7 @@ async function confirmFleet() {
       id: ship.id,
       name: ship.name,
       size: ship.size,
+      orientation: ship.orientation || inferOrientationFromCells(ship.cells),
       cells: [...ship.cells],
       hits: []
     }));
