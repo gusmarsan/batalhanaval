@@ -1,0 +1,74 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function room(roomId) {
+      return get(/databases/$(database)/documents/battleshipRooms/$(roomId)).data;
+    }
+
+    function isParticipant(roomData) {
+      return signedIn()
+        && (
+          roomData.player1.uid == request.auth.uid
+          || (roomData.player2 != null && roomData.player2.uid == request.auth.uid)
+        );
+    }
+
+    // Mantém o isolamento dos dados dos aplicativos pessoais já existentes.
+    match /users/{userId}/{document=**} {
+      allow read, write: if signedIn() && request.auth.uid == userId;
+    }
+
+    match /battleshipRooms/{roomId} {
+      // O código da sala funciona como convite. Consultas/listagens continuam bloqueadas.
+      allow get: if signedIn();
+      allow list: if false;
+
+      allow create: if signedIn()
+        && request.resource.data.player1.uid == request.auth.uid
+        && request.resource.data.player2 == null;
+
+      // Permite a entrada do segundo jogador ou alterações feitas por um participante.
+      allow update: if signedIn()
+        && (
+          isParticipant(resource.data)
+          || (
+            resource.data.player2 == null
+            && request.resource.data.player2.uid == request.auth.uid
+            && request.resource.data.player1 == resource.data.player1
+          )
+        );
+
+      allow delete: if isParticipant(resource.data);
+
+      match /players/{playerId} {
+        // Cada frota só pode ser lida e alterada pelo próprio dono.
+        allow create, read, update: if signedIn()
+          && request.auth.uid == playerId
+          && isParticipant(room(roomId));
+        allow delete: if signedIn() && isParticipant(room(roomId));
+      }
+
+      match /shots/{shotId} {
+        allow read: if signedIn() && isParticipant(room(roomId));
+
+        allow create: if signedIn()
+          && isParticipant(room(roomId))
+          && request.resource.data.attackerUid == request.auth.uid;
+
+        // O defensor é responsável por revelar e registrar o resultado do tiro.
+        allow update: if signedIn()
+          && isParticipant(room(roomId))
+          && resource.data.defenderUid == request.auth.uid
+          && request.resource.data.defenderUid == resource.data.defenderUid
+          && request.resource.data.attackerUid == resource.data.attackerUid
+          && request.resource.data.coordinate == resource.data.coordinate;
+
+        allow delete: if signedIn() && isParticipant(room(roomId));
+      }
+    }
+  }
+}

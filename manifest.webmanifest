@@ -1,0 +1,17 @@
+{
+  "name": "Batalha Naval — Duelo online",
+  "short_name": "Batalha Naval",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#07182c",
+  "theme_color": "#07182c",
+  "description": "Batalha Naval online para duas pessoas.",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
