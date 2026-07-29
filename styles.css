@@ -402,11 +402,12 @@ button { -webkit-tap-highlight-color: transparent; }
 .cell.preview-valid::before,
 .cell.preview-invalid::before {
   opacity: 1;
-  box-shadow: inset 0 0 0 1px rgba(228, 242, 248, .18), inset 0 -2px 6px rgba(0,0,0,.14);
+  box-shadow: inset 0 0 0 1px rgba(228, 242, 248, .14), inset 0 -2px 7px rgba(0,0,0,.18);
+  background-repeat: no-repeat;
 }
 
 .cell.ship::before {
-  background: linear-gradient(180deg, #b8c5cd 0%, #8596a2 50%, #5f7482 100%);
+  background: linear-gradient(180deg, #b7c4cc 0%, #8394a0 54%, #5e727e 100%);
 }
 .cell.preview-valid::before {
   background: linear-gradient(180deg, rgba(121, 235, 182, .95) 0%, rgba(56, 174, 122, .98) 100%);
@@ -415,35 +416,106 @@ button { -webkit-tap-highlight-color: transparent; }
   background: linear-gradient(180deg, rgba(255, 135, 154, .95) 0%, rgba(179, 53, 77, .98) 100%);
 }
 
+/* Forma-base por segmento */
 .cell[data-segment="solo"]::before {
   inset: 18%;
   border-radius: 50% 46% 42% 46% / 54% 46% 48% 46%;
 }
 .cell[data-orientation="horizontal"][data-segment="bow"]::before {
-  inset: 18% 10% 18% 16%;
-  border-radius: 62% 24% 24% 62% / 50% 18% 18% 50%;
+  inset: 18% 10% 18% 14%;
+  border-radius: 66% 26% 26% 66% / 52% 18% 18% 52%;
 }
 .cell[data-orientation="horizontal"][data-segment="mid"]::before {
   inset: 18% 4% 18% 4%;
-  border-radius: 26% / 48%;
+  border-radius: 22% / 42%;
 }
 .cell[data-orientation="horizontal"][data-segment="stern"]::before {
-  inset: 18% 16% 18% 10%;
-  border-radius: 24% 62% 62% 24% / 18% 50% 50% 18%;
+  inset: 18% 14% 18% 10%;
+  border-radius: 24% 58% 58% 24% / 18% 48% 48% 18%;
 }
 .cell[data-orientation="vertical"][data-segment="bow"]::before {
-  inset: 16% 18% 10% 18%;
-  border-radius: 58% 58% 24% 24% / 62% 62% 24% 24%;
+  inset: 14% 18% 10% 18%;
+  border-radius: 60% 60% 24% 24% / 66% 66% 24% 24%;
 }
 .cell[data-orientation="vertical"][data-segment="mid"]::before {
   inset: 4% 18% 4% 18%;
-  border-radius: 48% / 26%;
+  border-radius: 42% / 22%;
 }
 .cell[data-orientation="vertical"][data-segment="stern"]::before {
-  inset: 10% 18% 16% 18%;
-  border-radius: 24% 24% 58% 58% / 24% 24% 62% 62%;
+  inset: 10% 18% 14% 18%;
+  border-radius: 24% 24% 58% 58% / 24% 24% 60% 60%;
 }
 
+/* Porta-aviões: mais largo, convés reto e "ilha" */
+.cell.ship-kind-carrier::before,
+.cell.preview-valid.ship-kind-carrier::before,
+.cell.preview-invalid.ship-kind-carrier::before {
+  box-shadow: inset 0 0 0 1px rgba(228,242,248,.14), inset 0 -2px 7px rgba(0,0,0,.18), inset 0 0 0 999px transparent;
+}
+.cell[data-orientation="horizontal"].ship-kind-carrier[data-segment="bow"]::before { inset: 16% 8% 16% 14%; border-radius: 68% 18% 18% 68% / 50% 12% 12% 50%; }
+.cell[data-orientation="horizontal"].ship-kind-carrier[data-segment="mid"]::before { inset: 16% 2% 16% 2%; border-radius: 10% / 20%; background-image: linear-gradient(180deg, #c0c9cf 0%, #8e9ca6 58%, #687883 100%), linear-gradient(90deg, transparent 0 68%, rgba(55,68,77,.42) 69% 80%, transparent 81% 100%); }
+.cell[data-orientation="horizontal"].ship-kind-carrier[data-segment="stern"]::before { inset: 16% 14% 16% 8%; border-radius: 18% 40% 40% 18% / 12% 42% 42% 12%; }
+.cell[data-orientation="vertical"].ship-kind-carrier[data-segment="bow"]::before { inset: 14% 16% 8% 16%; border-radius: 66% 66% 18% 18% / 68% 68% 18% 18%; }
+.cell[data-orientation="vertical"].ship-kind-carrier[data-segment="mid"]::before { inset: 2% 16% 2% 16%; border-radius: 20% / 10%; background-image: linear-gradient(180deg, #c0c9cf 0%, #8e9ca6 58%, #687883 100%), linear-gradient(180deg, transparent 0 68%, rgba(55,68,77,.42) 69% 80%, transparent 81% 100%); }
+.cell[data-orientation="vertical"].ship-kind-carrier[data-segment="stern"]::before { inset: 8% 16% 14% 16%; border-radius: 18% 18% 40% 40% / 18% 18% 42% 42%; }
+
+/* Encouraçado: casco robusto com pequenas torres */
+.cell[data-orientation="horizontal"].ship-kind-battleship[data-segment="mid"]::before,
+.cell[data-orientation="horizontal"].ship-kind-cruiser[data-segment="mid"]::before,
+.cell[data-orientation="horizontal"].ship-kind-destroyer-1[data-segment="mid"]::before,
+.cell[data-orientation="horizontal"].ship-kind-destroyer-2[data-segment="mid"]::before {
+  background-image:
+    radial-gradient(circle at 34% 42%, rgba(72,84,92,.5) 0 12%, transparent 13%),
+    radial-gradient(circle at 62% 42%, rgba(72,84,92,.46) 0 10%, transparent 11%),
+    linear-gradient(180deg, #b7c4cc 0%, #8394a0 54%, #5e727e 100%);
+}
+.cell[data-orientation="vertical"].ship-kind-battleship[data-segment="mid"]::before,
+.cell[data-orientation="vertical"].ship-kind-cruiser[data-segment="mid"]::before,
+.cell[data-orientation="vertical"].ship-kind-destroyer-1[data-segment="mid"]::before,
+.cell[data-orientation="vertical"].ship-kind-destroyer-2[data-segment="mid"]::before {
+  background-image:
+    radial-gradient(circle at 42% 34%, rgba(72,84,92,.5) 0 12%, transparent 13%),
+    radial-gradient(circle at 42% 62%, rgba(72,84,92,.46) 0 10%, transparent 11%),
+    linear-gradient(180deg, #b7c4cc 0%, #8394a0 54%, #5e727e 100%);
+}
+.cell[data-orientation="horizontal"].ship-kind-battleship[data-segment="bow"]::before { inset: 17% 8% 17% 12%; }
+.cell[data-orientation="horizontal"].ship-kind-battleship[data-segment="mid"]::before { inset: 17% 4% 17% 4%; }
+.cell[data-orientation="horizontal"].ship-kind-battleship[data-segment="stern"]::before { inset: 17% 12% 17% 8%; }
+.cell[data-orientation="vertical"].ship-kind-battleship[data-segment="bow"]::before { inset: 12% 17% 8% 17%; }
+.cell[data-orientation="vertical"].ship-kind-battleship[data-segment="mid"]::before { inset: 4% 17% 4% 17%; }
+.cell[data-orientation="vertical"].ship-kind-battleship[data-segment="stern"]::before { inset: 8% 17% 12% 17%; }
+
+/* Cruzador: mais fino */
+.cell[data-orientation="horizontal"].ship-kind-cruiser[data-segment="bow"]::before { inset: 19% 10% 19% 18%; }
+.cell[data-orientation="horizontal"].ship-kind-cruiser[data-segment="mid"]::before { inset: 19% 9% 19% 9%; }
+.cell[data-orientation="horizontal"].ship-kind-cruiser[data-segment="stern"]::before { inset: 19% 18% 19% 10%; }
+.cell[data-orientation="vertical"].ship-kind-cruiser[data-segment="bow"]::before { inset: 18% 19% 10% 19%; }
+.cell[data-orientation="vertical"].ship-kind-cruiser[data-segment="mid"]::before { inset: 9% 19% 9% 19%; }
+.cell[data-orientation="vertical"].ship-kind-cruiser[data-segment="stern"]::before { inset: 10% 19% 18% 19%; }
+
+/* Contratorpedeiros: finos e ágeis */
+.cell[data-orientation="horizontal"].ship-kind-destroyer-1[data-segment="bow"]::before,
+.cell[data-orientation="horizontal"].ship-kind-destroyer-2[data-segment="bow"]::before { inset: 20% 12% 20% 20%; }
+.cell[data-orientation="horizontal"].ship-kind-destroyer-1[data-segment="stern"]::before,
+.cell[data-orientation="horizontal"].ship-kind-destroyer-2[data-segment="stern"]::before { inset: 20% 20% 20% 12%; }
+.cell[data-orientation="vertical"].ship-kind-destroyer-1[data-segment="bow"]::before,
+.cell[data-orientation="vertical"].ship-kind-destroyer-2[data-segment="bow"]::before { inset: 20% 20% 12% 20%; }
+.cell[data-orientation="vertical"].ship-kind-destroyer-1[data-segment="stern"]::before,
+.cell[data-orientation="vertical"].ship-kind-destroyer-2[data-segment="stern"]::before { inset: 12% 20% 20% 20%; }
+
+/* Submarinos: cápsula arredondada */
+.cell.ship-kind-submarine-1::before,
+.cell.ship-kind-submarine-2::before,
+.cell.preview-valid.ship-kind-submarine-1::before,
+.cell.preview-valid.ship-kind-submarine-2::before,
+.cell.preview-invalid.ship-kind-submarine-1::before,
+.cell.preview-invalid.ship-kind-submarine-2::before {
+  inset: 22%;
+  border-radius: 999px;
+  background-image:
+    radial-gradient(circle at 50% 28%, rgba(233,241,246,.25) 0 8%, transparent 9%),
+    linear-gradient(180deg, #b7c4cc 0%, #8394a0 54%, #5e727e 100%);
+}
 .cell.miss::after,
 .cell.hit::after,
 .cell.sunk::after,
@@ -531,9 +603,9 @@ button { -webkit-tap-highlight-color: transparent; }
 .ship-option strong { display: block; font-size: .9rem; }
 .ship-option small { color: var(--muted); }
 .ship-mini { display: flex; align-items: center; gap: 3px; }
-.ship-mini i { display: block; width: 11px; height: 8px; border-radius: 999px; background: linear-gradient(180deg, #b8c5cd 0%, #8596a2 50%, #5f7482 100%); }
-.ship-mini i:first-child:not(:last-child) { border-radius: 999px 4px 4px 999px; }
-.ship-mini i:last-child:not(:first-child) { border-radius: 4px 999px 999px 4px; }
+.ship-mini i { display: block; width: 11px; height: 7px; border-radius: 999px; background: linear-gradient(180deg, #b8c5cd 0%, #8596a2 50%, #5f7482 100%); }
+.ship-mini i:first-child:not(:last-child) { border-radius: 999px 3px 3px 999px; }
+.ship-mini i:last-child:not(:first-child) { border-radius: 3px 999px 999px 3px; }
 .ship-option.placed .ship-mini i { background: linear-gradient(180deg, #76efb5 0%, #39c27f 100%); }
 .panel-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 15px; }
 .panel-actions .full-row { grid-column: 1 / -1; }
@@ -554,9 +626,13 @@ button { -webkit-tap-highlight-color: transparent; }
   padding-top: 18px;
 }
 .history h3 { margin: 0 0 11px; font-size: .98rem; }
-.history-list { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
-.history-item { padding: 9px 10px; border-radius: 11px; border: 1px solid var(--line); background: rgba(255,255,255,.028); font-size: .8rem; color: var(--muted); }
+.history-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.history-group h4 { margin: 0 0 10px; font-size: .9rem; color: #cfe8f3; }
+.history-list { display: grid; grid-template-columns: 1fr; gap: 8px; }
+.history-item { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 9px 10px; border-radius: 11px; border: 1px solid var(--line); background: rgba(255,255,255,.028); font-size: .8rem; color: var(--muted); }
 .history-item strong { color: var(--text); }
+.history-item span { text-transform: capitalize; }
+.empty-note.compact { padding: 12px; font-size: .84rem; }
 
 .result-card { text-align: center; padding: clamp(30px, 6vw, 64px); }
 .result-icon { width: 90px; height: 90px; display: grid; place-items: center; border-radius: 50%; margin: 0 auto 20px; font-size: 40px; background: rgba(57,217,138,.11); border: 1px solid rgba(57,217,138,.26); }
@@ -615,7 +691,7 @@ button { -webkit-tap-highlight-color: transparent; }
   .battle-layout { grid-template-columns: 1fr; }
   .status-strip { grid-template-columns: 1fr; }
   .vs { min-height: 16px; }
-  .history-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .history-columns { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 560px) {
@@ -634,6 +710,6 @@ button { -webkit-tap-highlight-color: transparent; }
   .board-shell { grid-template-columns: 17px minmax(0, 1fr); grid-template-rows: 17px minmax(0, 1fr); gap: 3px; }
   .cell { border-radius: 2px; }
   .battle-board-card { padding: 10px; }
-  .history-list { grid-template-columns: 1fr; }
+  .history-columns { grid-template-columns: 1fr; }
   .resume-box { align-items: flex-start; flex-direction: column; }
 }

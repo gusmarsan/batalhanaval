@@ -437,6 +437,7 @@ function createBoardHtml({ mode, ships = [], shots = [], disabled = false }) {
       if (shapeMeta?.segment) classes.push(`segment-${shapeMeta.segment}`);
       if (shapeMeta?.orientation) classes.push(`orientation-${shapeMeta.orientation}`);
       const unavailable = mode === "attack" && shot;
+      if (shapeMeta?.shipId) classes.push(`ship-kind-${shapeMeta.shipId}`);
       cells.push(`
         <button
           type="button"
@@ -445,6 +446,7 @@ function createBoardHtml({ mode, ships = [], shots = [], disabled = false }) {
           ${shapeMeta?.segment ? `data-segment="${shapeMeta.segment}"` : ""}
           ${shapeMeta?.orientation ? `data-orientation="${shapeMeta.orientation}"` : ""}
           ${shapeMeta?.size ? `data-size="${shapeMeta.size}"` : ""}
+          ${shapeMeta?.shipId ? `data-ship-id="${shapeMeta.shipId}"` : ""}
           aria-label="Casa ${coord}${shot?.result ? `: ${shot.result}` : ""}"
           ${disabled || unavailable ? "disabled" : ""}
         ></button>
@@ -657,8 +659,13 @@ function renderBattle() {
   const message = gameMessage();
   const recentShots = [...state.shots]
     .filter((shot) => shot.round === state.room.round)
-    .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0))
-    .slice(0, 8);
+    .sort((a, b) => (b.createdAt?.seconds || 0) - (a.createdAt?.seconds || 0));
+  const myRecentShots = recentShots
+    .filter((shot) => shot.attackerUid === state.user.uid)
+    .slice(0, 6);
+  const opponentRecentShots = recentShots
+    .filter((shot) => shot.attackerUid !== state.user.uid)
+    .slice(0, 6);
 
   el.app.innerHTML = `
     ${roomHeaderHtml("Batalha em andamento", "Destrua toda a frota adversária")}
@@ -687,12 +694,24 @@ function renderBattle() {
         </div>
       </div>
 
-      <div class="history">
+      <div class="history history-split">
         <h3>Últimos tiros</h3>
-        ${recentShots.length ? `<div class="history-list">${recentShots.map((shot) => {
-          const attacker = shot.attackerUid === state.room.player1.uid ? state.room.player1 : state.room.player2;
-          return `<div class="history-item"><strong>${escapeHtml(attacker?.name || "Jogador")}</strong> em ${shot.coordinate}: ${shotResultLabel(shot)}</div>`;
-        }).join("")}</div>` : `<div class="empty-note">Nenhum tiro disparado ainda.</div>`}
+        ${recentShots.length ? `
+          <div class="history-columns">
+            <div class="history-group">
+              <h4>Você</h4>
+              ${myRecentShots.length ? `<div class="history-list">${myRecentShots.map((shot) => {
+                return `<div class="history-item"><strong>${shot.coordinate}</strong><span>${shotResultLabel(shot)}</span></div>`;
+              }).join("")}</div>` : `<div class="empty-note compact">Você ainda não disparou nesta rodada.</div>`}
+            </div>
+            <div class="history-group">
+              <h4>${escapeHtml(opponent?.name || "Adversário")}</h4>
+              ${opponentRecentShots.length ? `<div class="history-list">${opponentRecentShots.map((shot) => {
+                return `<div class="history-item"><strong>${shot.coordinate}</strong><span>${shotResultLabel(shot)}</span></div>`;
+              }).join("")}</div>` : `<div class="empty-note compact">Nenhum tiro do adversário ainda.</div>`}
+            </div>
+          </div>
+        ` : `<div class="empty-note">Nenhum tiro disparado ainda.</div>`}
       </div>
 
       <div class="waiting-actions">
