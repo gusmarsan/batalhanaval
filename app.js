@@ -459,11 +459,28 @@ function createBoardHtml({ mode, ships = [], shots = [], disabled = false }) {
   if (mode === "attack" && !disabled) boardClasses.push("attack-ready");
 
   return `
-    <div class="board-shell">
+    <div class="tactical-board" data-tactical-mode="${mode}">
+      <div class="tactical-board__rail tactical-board__rail--top" aria-hidden="true">
+        <span class="tactical-board__mode">${mode === "attack" ? "SISTEMA DE AQUISIÇÃO" : mode === "placement" ? "PLANEJAMENTO DE FROTA" : "TELEMETRIA DE CASCO"}</span>
+        <span class="tactical-board__signal"><i></i>${disabled ? "MONITORANDO" : "ENLACE ATIVO"}</span>
+      </div>
+      <div class="tactical-board__viewport">
+        <span class="tactical-board__bracket tactical-board__bracket--tl" aria-hidden="true"></span>
+        <span class="tactical-board__bracket tactical-board__bracket--tr" aria-hidden="true"></span>
+        <span class="tactical-board__bracket tactical-board__bracket--bl" aria-hidden="true"></span>
+        <span class="tactical-board__bracket tactical-board__bracket--br" aria-hidden="true"></span>
+        <div class="board-shell">
       <div class="board-corner"></div>
       <div class="column-labels">${Array.from({ length: 10 }, (_, index) => `<span>${String.fromCharCode(65 + index)}</span>`).join("")}</div>
       <div class="row-labels">${Array.from({ length: 10 }, (_, index) => `<span>${index + 1}</span>`).join("")}</div>
       <div class="${boardClasses.join(" ")}" data-board-mode="${mode}">${cells.join("")}</div>
+        </div>
+      </div>
+      <div class="tactical-board__rail tactical-board__rail--bottom" aria-hidden="true">
+        <span>GRID 10×10</span>
+        <span class="tactical-board__bearing">BRG 000°</span>
+        <span>SONAR / LINK-7</span>
+      </div>
     </div>
   `;
 }

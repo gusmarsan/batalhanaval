@@ -1384,6 +1384,275 @@ button:focus-visible, input:focus-visible, a:focus-visible {
   .dialog-actions { display: grid; grid-template-columns: 1fr 1fr; }
 }
 
+/* PASS 1 — premium tactical board
+   Board-scoped visual treatment only; interaction and game state remain unchanged. */
+.board-shell {
+  position: relative;
+  isolation: isolate;
+  padding: 12px;
+  border-radius: 16px;
+  background:
+    linear-gradient(135deg, rgba(211, 231, 239, .16), transparent 18% 76%, rgba(0, 0, 0, .42)),
+    linear-gradient(155deg, #263946 0%, #101d26 42%, #071017 100%);
+  box-shadow:
+    0 28px 54px rgba(0, 0, 0, .42),
+    0 8px 16px rgba(0, 0, 0, .3),
+    inset 0 1px rgba(234, 247, 252, .24),
+    inset 0 -2px 3px rgba(0, 0, 0, .55);
+}
+.board-shell::before {
+  content: "";
+  position: absolute;
+  inset: 5px;
+  z-index: -1;
+  border-radius: 12px;
+  pointer-events: none;
+  box-shadow:
+    inset 0 0 0 1px rgba(173, 215, 232, .12),
+    inset 0 0 18px rgba(0, 0, 0, .55);
+}
+.board-corner,
+.column-labels,
+.row-labels { position: relative; z-index: 3; }
+.column-labels span,
+.row-labels span {
+  color: #b4cbd5;
+  text-shadow: 0 1px 2px #000, 0 0 9px rgba(102, 204, 237, .18);
+}
+
+.board {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  padding: 4px;
+  gap: 1px;
+  border-radius: 6px;
+  background: #020b12;
+  box-shadow:
+    0 0 0 1px rgba(171, 222, 241, .2),
+    0 2px 4px rgba(0, 0, 0, .75),
+    inset 0 0 30px rgba(0, 0, 0, .85);
+}
+.board::before,
+.board::after {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  z-index: 2;
+  border-radius: 3px;
+  pointer-events: none;
+}
+.board::before {
+  opacity: .52;
+  background:
+    radial-gradient(ellipse at 18% 26%, rgba(151, 223, 245, .13), transparent 27%),
+    radial-gradient(ellipse at 78% 72%, rgba(89, 183, 218, .12), transparent 31%);
+  mix-blend-mode: screen;
+  animation: water-caustics 12s ease-in-out infinite alternate;
+}
+.board::after {
+  opacity: .32;
+  background: linear-gradient(118deg, transparent 15%, rgba(137, 224, 250, .13) 34%, transparent 52%);
+  transform: translateX(-75%);
+  animation: water-glint 9s ease-in-out infinite;
+}
+.board.attack-ready::after {
+  opacity: .46;
+  background: conic-gradient(from 225deg at 0 100%, transparent 0deg, rgba(94, 219, 255, .22) 16deg, transparent 34deg);
+  transform: none;
+  transform-origin: 0 100%;
+  animation: radar-board-sweep 4.8s linear infinite;
+}
+
+.cell {
+  z-index: 1;
+  border-radius: 0;
+  background:
+    radial-gradient(ellipse at 30% 20%, rgba(167, 231, 250, .13), transparent 42%),
+    linear-gradient(150deg, rgba(12, 102, 139, .96), rgba(4, 47, 73, .98));
+  box-shadow:
+    inset 1px 1px rgba(176, 229, 247, .075),
+    inset -1px -1px rgba(0, 8, 15, .2);
+  transition:
+    filter .16s ease,
+    transform .12s cubic-bezier(.2, .8, .2, 1),
+    background .2s ease,
+    box-shadow .2s ease;
+}
+.cell:nth-child(4n + 1) {
+  background:
+    radial-gradient(ellipse at 68% 72%, rgba(93, 190, 223, .1), transparent 44%),
+    linear-gradient(145deg, #0c6288, #043047);
+}
+.cell:nth-child(5n + 2) {
+  background:
+    radial-gradient(ellipse at 24% 30%, rgba(158, 226, 247, .1), transparent 40%),
+    linear-gradient(155deg, #0d6a91, #04344e);
+}
+.cell:hover { filter: brightness(1.13) saturate(1.08); }
+.cell:active { transform: scale(.91); filter: brightness(1.32); }
+.cell:focus-visible {
+  outline: 2px solid #ddf8ff;
+  outline-offset: -3px;
+}
+
+.board.attack-ready .cell:not(.miss):not(.hit):not(.sunk):not(.pending) {
+  cursor: crosshair;
+  box-shadow:
+    inset 1px 1px rgba(188, 235, 249, .09),
+    inset -1px -1px rgba(0, 8, 15, .24);
+}
+.board.attack-ready .cell:not(.miss):not(.hit):not(.sunk):not(.pending):hover {
+  z-index: 4;
+  filter: brightness(1.18) saturate(1.12);
+  background:
+    radial-gradient(circle at center, rgba(197, 243, 255, .18), transparent 42%),
+    linear-gradient(145deg, #1684ae, #074760);
+  box-shadow:
+    inset 0 0 0 2px rgba(219, 248, 255, .82),
+    0 3px 12px rgba(0, 0, 0, .36),
+    0 0 18px rgba(63, 192, 229, .22);
+}
+.board.attack-ready .cell:not(.miss):not(.hit):not(.sunk):not(.pending):hover::after {
+  opacity: 1;
+  inset: 30%;
+  border: 1px solid rgba(235, 252, 255, .9);
+  border-radius: 50%;
+  background:
+    linear-gradient(#dff9ff, #dff9ff) 50% 0 / 1px 24% no-repeat,
+    linear-gradient(#dff9ff, #dff9ff) 50% 100% / 1px 24% no-repeat,
+    linear-gradient(90deg, #dff9ff, #dff9ff) 0 50% / 24% 1px no-repeat,
+    linear-gradient(90deg, #dff9ff, #dff9ff) 100% 50% / 24% 1px no-repeat;
+  box-shadow: 0 0 9px rgba(126, 225, 252, .42);
+  animation: target-lock .7s cubic-bezier(.16, 1, .3, 1) both;
+}
+
+.cell.ship::before,
+.cell.preview-valid::before,
+.cell.preview-invalid::before {
+  filter: drop-shadow(0 4px 3px rgba(0, 0, 0, .48));
+}
+.cell.ship::before {
+  background:
+    linear-gradient(90deg, transparent 0 7%, rgba(230, 240, 243, .18) 8% 10%, transparent 11% 100%),
+    linear-gradient(180deg, #d7e0e3 0%, #95a4aa 18%, #657780 51%, #344750 82%, #1e3039 100%);
+  box-shadow:
+    inset 0 1px rgba(255, 255, 255, .48),
+    inset 0 -2px 4px rgba(0, 0, 0, .55),
+    inset 0 0 0 1px rgba(9, 24, 31, .42);
+}
+.cell.ship[data-orientation="horizontal"]::before {
+  background:
+    linear-gradient(90deg, transparent 0 12%, rgba(20, 34, 40, .32) 13% 15%, transparent 16% 100%),
+    linear-gradient(180deg, #d7e0e3, #91a0a7 18%, #5d7079 52%, #2a3e48 84%, #182932);
+}
+.cell.ship[data-orientation="vertical"]::before {
+  background:
+    linear-gradient(180deg, transparent 0 12%, rgba(20, 34, 40, .32) 13% 15%, transparent 16% 100%),
+    linear-gradient(90deg, #263a44, #809198 45%, #c8d3d7 58%, #5a6d76 100%);
+}
+.cell.preview-valid::before {
+  background: linear-gradient(180deg, #bcefd9, #4ca981 55%, #245e4b);
+  box-shadow: inset 0 1px rgba(255, 255, 255, .38), 0 0 12px rgba(80, 213, 157, .3);
+}
+.cell.preview-invalid::before {
+  background: linear-gradient(180deg, #e9a0a8, #a54250 55%, #57232c);
+  box-shadow: inset 0 1px rgba(255, 255, 255, .3), 0 0 11px rgba(220, 76, 94, .28);
+}
+
+.cell.miss::after {
+  inset: 17%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, rgba(240, 252, 255, .98) 0 7%, transparent 9%),
+    radial-gradient(circle, transparent 0 31%, rgba(202, 240, 251, .82) 33% 37%, transparent 39%),
+    conic-gradient(from 8deg, transparent 0 8%, rgba(224, 247, 253, .72) 9% 11%, transparent 12% 24%, rgba(224, 247, 253, .64) 25% 28%, transparent 29% 100%);
+  box-shadow: none;
+  animation: splash-settle .62s cubic-bezier(.16, 1, .3, 1) both;
+}
+.cell.hit:not(.ship),
+.cell.sunk:not(.ship) {
+  background:
+    radial-gradient(circle at center, rgba(125, 43, 29, .7), transparent 58%),
+    linear-gradient(145deg, #263d48, #101e26);
+}
+.cell.hit.ship::before,
+.cell.sunk.ship::before {
+  filter: saturate(.55) brightness(.68) drop-shadow(0 4px 3px rgba(0, 0, 0, .58));
+  background:
+    radial-gradient(circle at 50% 50%, #170d0c 0 22%, #54251d 23% 36%, transparent 38%),
+    linear-gradient(180deg, #8d9291, #4d595c 48%, #242f32);
+}
+.cell.hit::after,
+.cell.sunk::after {
+  inset: 7%;
+  background:
+    radial-gradient(circle, #fff6d5 0 6%, #ffc76b 7% 17%, #d55e32 18% 29%, rgba(83, 27, 20, .75) 30% 42%, transparent 58%),
+    conic-gradient(from 12deg, transparent 0 10%, rgba(255, 194, 102, .85) 11% 13%, transparent 14% 31%, rgba(255, 128, 70, .68) 32% 35%, transparent 36% 100%);
+  box-shadow: 0 2px 9px rgba(255, 139, 64, .22);
+  animation: impact-bloom .55s cubic-bezier(.16, 1, .3, 1) both;
+}
+.cell.sunk {
+  filter: saturate(.6) brightness(.72);
+}
+.cell.sunk::after {
+  inset: 4%;
+  background:
+    radial-gradient(circle, #fff5ce 0 5%, #e99449 6% 15%, #7f3328 16% 31%, rgba(20, 20, 18, .82) 32% 46%, transparent 59%),
+    conic-gradient(from 20deg, transparent 0 13%, rgba(205, 212, 207, .32) 14% 20%, transparent 21% 49%, rgba(178, 190, 187, .22) 50% 59%, transparent 60%);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, .42);
+}
+.cell.pending::after {
+  inset: 22%;
+  border: 1px solid rgba(255, 217, 143, .92);
+  background:
+    radial-gradient(circle, rgba(255, 227, 165, .8) 0 7%, transparent 9%),
+    conic-gradient(from 0deg, rgba(255, 213, 126, .62), transparent 18% 100%);
+  box-shadow: 0 0 10px rgba(255, 193, 91, .26);
+  animation: targeting-pulse 1.4s ease-in-out infinite;
+}
+.board.disabled { opacity: .82; filter: saturate(.78); }
+
+@keyframes water-caustics {
+  0% { transform: translate3d(-1.5%, -1%, 0) scale(1.02); opacity: .42; }
+  100% { transform: translate3d(1.5%, 1%, 0) scale(1.07); opacity: .62; }
+}
+@keyframes water-glint {
+  0%, 22% { transform: translateX(-85%); opacity: 0; }
+  45% { opacity: .34; }
+  72%, 100% { transform: translateX(85%); opacity: 0; }
+}
+@keyframes radar-board-sweep {
+  to { transform: rotate(360deg); }
+}
+@keyframes target-lock {
+  from { transform: scale(1.65) rotate(18deg); opacity: 0; }
+  to { transform: scale(1) rotate(0); opacity: 1; }
+}
+@keyframes splash-settle {
+  from { transform: scale(.28); opacity: 0; filter: blur(3px); }
+  55% { opacity: 1; }
+  to { transform: scale(1); opacity: .92; filter: blur(0); }
+}
+@keyframes impact-bloom {
+  from { transform: scale(.18); opacity: 0; filter: blur(4px) brightness(1.8); }
+  46% { transform: scale(1.22); opacity: 1; }
+  to { transform: scale(1); opacity: 1; filter: blur(0) brightness(1); }
+}
+@keyframes targeting-pulse {
+  0%, 100% { transform: scale(.72) rotate(0); opacity: .6; }
+  50% { transform: scale(1.04) rotate(90deg); opacity: 1; }
+}
+
+@media (max-width: 560px) {
+  .board-shell {
+    padding: 7px;
+    border-radius: 11px;
+    box-shadow: 0 18px 34px rgba(0, 0, 0, .4), inset 0 1px rgba(234, 247, 252, .2);
+  }
+  .board { padding: 3px; }
+}
+
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
   *, *::before, *::after {
@@ -1400,4 +1669,296 @@ button:focus-visible, input:focus-visible, a:focus-visible {
   }
   .cell { box-shadow: inset 0 0 0 1px rgba(220,245,255,.2); }
   .button, .input { border-width: 2px; }
+}
+
+/* ==========================================================================
+   TACTICAL NAVAL DISPLAY — board visual replacement
+   ========================================================================== */
+
+.tactical-board {
+  --display-cyan: #79e7ff;
+  --display-cyan-hot: #c9f8ff;
+  --display-amber: #ffbd59;
+  --display-red: #ff684d;
+  position: relative;
+  isolation: isolate;
+  width: 100%;
+  padding: 9px;
+  color: #c9e7ef;
+  background:
+    linear-gradient(135deg, rgba(255,255,255,.08), transparent 12% 86%, rgba(0,0,0,.42)),
+    linear-gradient(180deg, #1a2b34, #09141b 42%, #050b10);
+  border-radius: 7px;
+  box-shadow:
+    0 24px 50px rgba(0, 0, 0, .48),
+    0 5px 14px rgba(0, 0, 0, .45),
+    inset 0 1px rgba(224, 246, 252, .18),
+    inset 0 -1px 2px rgba(0, 0, 0, .85);
+}
+
+.tactical-board::before {
+  content: "";
+  position: absolute;
+  inset: 4px;
+  z-index: -1;
+  border: 1px solid rgba(155, 203, 216, .14);
+  border-radius: 4px;
+  pointer-events: none;
+}
+
+.tactical-board__rail {
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding-inline: 9px;
+  font-family: "Barlow Condensed", sans-serif;
+  font-size: .62rem;
+  font-weight: 700;
+  letter-spacing: .15em;
+  line-height: 1;
+  color: #79939d;
+  text-transform: uppercase;
+  user-select: none;
+}
+
+.tactical-board__rail--top {
+  border-bottom: 1px solid rgba(139, 195, 210, .12);
+}
+
+.tactical-board__rail--bottom {
+  border-top: 1px solid rgba(139, 195, 210, .1);
+}
+
+.tactical-board__mode {
+  color: #b9d3da;
+}
+
+.tactical-board__signal {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #73d6b0;
+}
+
+.tactical-board__signal i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: #64e7ae;
+  box-shadow: 0 1px 6px rgba(69, 216, 151, .72);
+}
+
+.tactical-board__bearing {
+  color: var(--display-cyan);
+  font-variant-numeric: tabular-nums;
+}
+
+.tactical-board__viewport {
+  position: relative;
+  padding: 9px;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 50% 45%, rgba(18, 92, 112, .24), transparent 65%),
+    linear-gradient(155deg, #07161d, #02080c);
+  box-shadow:
+    inset 0 4px 14px rgba(0,0,0,.72),
+    inset 0 0 0 1px rgba(112, 190, 211, .13);
+}
+
+.tactical-board__bracket {
+  position: absolute;
+  z-index: 8;
+  width: 22px;
+  height: 22px;
+  pointer-events: none;
+  opacity: .72;
+}
+
+.tactical-board__bracket--tl { top: 4px; left: 4px; border-top: 1px solid var(--display-cyan); border-left: 1px solid var(--display-cyan); }
+.tactical-board__bracket--tr { top: 4px; right: 4px; border-top: 1px solid var(--display-cyan); border-right: 1px solid var(--display-cyan); }
+.tactical-board__bracket--bl { bottom: 4px; left: 4px; border-bottom: 1px solid var(--display-cyan); border-left: 1px solid var(--display-cyan); }
+.tactical-board__bracket--br { right: 4px; bottom: 4px; border-right: 1px solid var(--display-cyan); border-bottom: 1px solid var(--display-cyan); }
+
+.tactical-board .board-shell {
+  position: relative;
+  isolation: isolate;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.tactical-board .board-shell::before {
+  display: none;
+}
+
+.tactical-board .board-corner::after {
+  content: "+";
+  display: grid;
+  place-items: center;
+  height: 100%;
+  color: rgba(121, 231, 255, .48);
+  font: 600 .65rem/1 ui-monospace, monospace;
+}
+
+.tactical-board .column-labels,
+.tactical-board .row-labels {
+  color: #91b7c2;
+  font-family: "Barlow Condensed", sans-serif;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: .04em;
+}
+
+.tactical-board .column-labels span,
+.tactical-board .row-labels span {
+  color: #91b7c2;
+  text-shadow: 0 1px 2px #000;
+}
+
+.tactical-board .board {
+  position: relative;
+  isolation: isolate;
+  padding: 1px;
+  gap: 1px;
+  overflow: hidden;
+  border-radius: 0;
+  background: rgba(123, 201, 221, .14);
+  box-shadow:
+    0 4px 14px rgba(0,0,0,.52),
+    inset 0 0 0 1px rgba(150, 222, 239, .14);
+}
+
+.tactical-board .board::before {
+  inset: 0;
+  z-index: 2;
+  border-radius: 0;
+  opacity: .65;
+  background:
+    radial-gradient(ellipse at 30% 18%, rgba(137, 231, 244, .15), transparent 28%),
+    radial-gradient(ellipse at 75% 74%, rgba(64, 171, 192, .14), transparent 34%);
+  mix-blend-mode: screen;
+  animation: tactical-water 9s ease-in-out infinite alternate;
+}
+
+.tactical-board .board::after {
+  inset: -45%;
+  z-index: 3;
+  border-radius: 50%;
+  opacity: 0;
+  background: conic-gradient(from 0deg, transparent 0 331deg, rgba(111, 227, 255, .18) 346deg, transparent 360deg);
+  transform: rotate(0deg);
+}
+
+.tactical-board[data-tactical-mode="attack"] .board.attack-ready::after {
+  opacity: .75;
+  animation: tactical-sweep 5.6s linear infinite;
+}
+
+.tactical-board .cell,
+.tactical-board .cell:nth-child(4n + 1),
+.tactical-board .cell:nth-child(5n + 2) {
+  position: relative;
+  z-index: 1;
+  border-radius: 0;
+  background:
+    radial-gradient(ellipse at 38% 22%, rgba(157, 232, 242, .09), transparent 47%),
+    linear-gradient(145deg, #0b4d5d, #07323e 58%, #062832);
+  box-shadow:
+    inset 0 0 0 1px rgba(127, 213, 230, .055),
+    inset 1px 1px rgba(181, 239, 248, .045);
+}
+
+.tactical-board .cell:nth-child(3n + 1) {
+  background:
+    radial-gradient(ellipse at 66% 72%, rgba(127, 219, 232, .07), transparent 42%),
+    linear-gradient(145deg, #0c5262, #073541 62%, #062b34);
+}
+
+.tactical-board .cell:focus-visible {
+  z-index: 7;
+  outline: 2px solid #e6fbff;
+  outline-offset: -3px;
+}
+
+.tactical-board .board.attack-ready .cell:not(.miss):not(.hit):not(.sunk):not(.pending):hover {
+  z-index: 6;
+  filter: brightness(1.14) saturate(1.1);
+  background:
+    radial-gradient(circle, rgba(198, 248, 255, .18), transparent 45%),
+    linear-gradient(145deg, #147a8f, #0a4e60);
+  box-shadow:
+    inset 0 0 0 1px var(--display-cyan-hot),
+    0 3px 12px rgba(0,0,0,.38);
+}
+
+.tactical-board .board.attack-ready .cell:not(.miss):not(.hit):not(.sunk):not(.pending):hover::after {
+  inset: 27%;
+  border: 1px solid rgba(225, 251, 255, .95);
+  border-radius: 50%;
+  opacity: 1;
+  background:
+    linear-gradient(#e8fcff, #e8fcff) 50% 0 / 1px 25% no-repeat,
+    linear-gradient(#e8fcff, #e8fcff) 50% 100% / 1px 25% no-repeat,
+    linear-gradient(90deg, #e8fcff, #e8fcff) 0 50% / 25% 1px no-repeat,
+    linear-gradient(90deg, #e8fcff, #e8fcff) 100% 50% / 25% 1px no-repeat;
+  box-shadow: none;
+  animation: tactical-lock .32s cubic-bezier(.16,1,.3,1) both;
+}
+
+.tactical-board .cell.miss::after {
+  inset: 22%;
+  border: 0;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, #effdff 0 7%, transparent 9%),
+    radial-gradient(circle, transparent 0 30%, rgba(209, 246, 250, .9) 32% 36%, transparent 38%),
+    conic-gradient(transparent 0 10%, rgba(208,244,249,.78) 11% 13%, transparent 14% 28%, rgba(208,244,249,.64) 29% 31%, transparent 32%);
+  box-shadow: none;
+}
+
+.tactical-board .cell.hit::after,
+.tactical-board .cell.sunk::after {
+  inset: 8%;
+  border-radius: 50%;
+  background:
+    radial-gradient(circle, #fff8d6 0 6%, #ffc15b 7% 17%, #f0613f 18% 30%, rgba(79,20,17,.82) 31% 44%, transparent 58%),
+    conic-gradient(from 16deg, transparent 0 12%, rgba(255,187,85,.86) 13% 15%, transparent 16% 42%, rgba(255,106,61,.72) 43% 46%, transparent 47%);
+  box-shadow: 0 4px 10px rgba(0,0,0,.35);
+}
+
+.tactical-board .cell.pending::after {
+  inset: 22%;
+  border: 1px solid var(--display-amber);
+  border-radius: 50%;
+  background: conic-gradient(from 0deg, rgba(255,189,89,.72), transparent 22% 100%);
+  box-shadow: 0 2px 9px rgba(0,0,0,.3);
+  animation: tactical-pending 1.35s linear infinite;
+}
+
+.tactical-board .board.disabled {
+  opacity: .78;
+  filter: saturate(.76) brightness(.86);
+}
+
+@keyframes tactical-sweep { to { transform: rotate(360deg); } }
+@keyframes tactical-water {
+  from { transform: translate3d(-1%, -.6%, 0) scale(1.015); }
+  to { transform: translate3d(1%, .6%, 0) scale(1.045); }
+}
+@keyframes tactical-lock {
+  from { transform: scale(1.55) rotate(12deg); opacity: 0; }
+  to { transform: scale(1) rotate(0); opacity: 1; }
+}
+@keyframes tactical-pending { to { transform: rotate(360deg); } }
+
+@media (max-width: 560px) {
+  .tactical-board { padding: 6px; }
+  .tactical-board__rail { min-height: 24px; padding-inline: 5px; font-size: .54rem; letter-spacing: .1em; }
+  .tactical-board__viewport { padding: 6px; }
+  .tactical-board__bearing { display: none; }
+  .tactical-board .board-shell { grid-template-columns: 16px minmax(0, 1fr); grid-template-rows: 16px minmax(0, 1fr); gap: 2px; }
 }
