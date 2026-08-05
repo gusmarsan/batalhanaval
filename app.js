@@ -472,7 +472,7 @@ function roomHeaderHtml(title, description) {
   return `
     <div class="room-header">
       <div>
-        <p class="eyebrow">Rodada ${state.room?.round || 1}</p>
+        <p class="signal-label">Rodada ${state.room?.round || 1}</p>
         <h1>${escapeHtml(title)}</h1>
         <p>${escapeHtml(description)}</p>
       </div>
@@ -523,7 +523,7 @@ function renderHome() {
   el.app.innerHTML = `
     <section class="card hero">
       <div class="hero-copy">
-        <p class="eyebrow">Dois jogadores · tempo real</p>
+        <p class="signal-label">Dois jogadores · tempo real</p>
         <h1>Prepare a frota.<br>Domine o oceano.</h1>
         <p>Crie uma sala privada, compartilhe o código e enfrente outra pessoa pelo celular ou computador.</p>
         <div class="feature-pills">
@@ -750,7 +750,7 @@ function renderResult() {
 function renderError(error) {
   el.app.innerHTML = `
     <section class="card error-card">
-      <p class="eyebrow">Configuração necessária</p>
+      <p class="signal-label">Configuração necessária</p>
       <h1>Não foi possível iniciar o jogo</h1>
       <p>${escapeHtml(getErrorMessage(error))}</p>
       <div class="error-code">${escapeHtml(error?.code || error?.message || "Erro desconhecido")}</div>
